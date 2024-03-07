@@ -200,7 +200,6 @@ export default function Join() {
                 <ArrowLeft className="mr-2" />
                 이전 단계로
               </Button>
-              {/* <Button type="submit" className=""> */}
               <Button
                 type="button"
                 className=""

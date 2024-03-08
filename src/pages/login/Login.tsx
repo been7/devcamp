@@ -53,8 +53,6 @@ export default function Login() {
   // };
 
   const handleLoginSubmit = async (data: RegisterInput) => {
-    console.log("호출안되냐?");
-
     const { username, email, phone, role, password, confirmPassword } = data;
     console.log(email);
 

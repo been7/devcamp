@@ -17,9 +17,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { registerSchema } from "@/validators/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { auth } from "../../firebase";
 
 type RegisterInput = z.infer<typeof registerSchema>;
 
@@ -27,27 +29,17 @@ export default function login() {
   const loginForm = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      username: "",
       email: "",
+      phone: "",
+      role: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
   // 유효성 검사 후 폼 제출
-  const onSubmit = (data: RegisterInput) => {
-    loginForm.trigger(["email", "password"]);
-
-    const emailState = loginForm.getFieldState("email");
-    const passwordState = loginForm.getFieldState("password");
-
-    if (!emailState.isDirty || emailState.invalid) return;
-    if (!passwordState.isDirty || passwordState.invalid) return;
-
-    // 유효성 검사 통과해도 알럿 안뜸..
-    alert(data.password);
-  };
-
-  // 수정중
-  // const handleLoginButton = () => {
+  // const onSubmit = (data: RegisterInput) => {
   //   loginForm.trigger(["email", "password"]);
 
   //   const emailState = loginForm.getFieldState("email");
@@ -56,9 +48,37 @@ export default function login() {
   //   if (!emailState.isDirty || emailState.invalid) return;
   //   if (!passwordState.isDirty || passwordState.invalid) return;
 
-  //   // 폼 제출 핸들러 호출
-  //   loginForm.handleSubmit(onSubmit)();
+  //   // 유효성 검사 통과해도 알럿 안뜸..
+  //   alert("login 성공");
   // };
+
+  const handleLoginSubmit = async (data: RegisterInput) => {
+    console.log("호출안되냐?");
+
+    const { username, email, phone, role, password, confirmPassword } = data;
+    console.log(email);
+
+    loginForm.trigger(["email", "password"]);
+    const emailState = loginForm.getFieldState("email");
+    const passwordState = loginForm.getFieldState("password");
+
+    // 이메일과 비밀번호 필드의 유효성 검사를 통과한 경우에만 로그인을 시도합니다.
+    if (!emailState.invalid && !passwordState.invalid) {
+      try {
+        // 이메일과 비밀번호를 사용하여 로그인 시도
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          data.email,
+          data.password
+        );
+
+        console.log("로그인 성공", userCredential.user);
+      } catch (error) {
+        console.error("로그인 실패", error);
+        alert("login 실패");
+      }
+    }
+  };
 
   return (
     <div className="flex justify-center items-center h-screen">
@@ -69,7 +89,7 @@ export default function login() {
         </CardHeader>
         <CardContent>
           <Form {...loginForm}>
-            <form onSubmit={loginForm.handleSubmit(onSubmit)}>
+            <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)}>
               <FormField
                 control={loginForm.control}
                 name="email"
@@ -77,7 +97,11 @@ export default function login() {
                   <FormItem>
                     <FormLabel>이메일</FormLabel>
                     <FormControl>
-                      <Input placeholder="이메일을 입력하세요." {...field} />
+                      <Input
+                        type="email"
+                        placeholder="이메일을 입력하세요."
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -108,7 +132,7 @@ export default function login() {
             <Button
               type="submit"
               className="w-[350px]"
-              onClick={loginForm.handleSubmit(onSubmit)}
+              onClick={loginForm.handleSubmit(handleLoginSubmit)}
             >
               로그인
             </Button>

@@ -114,7 +114,7 @@ export default function Join() {
     });
 
     setTimeout(() => {
-      router.push("/login");
+      router.push("/login/Login");
     }, 1000);
   };
 

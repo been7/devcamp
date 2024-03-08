@@ -21,11 +21,11 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { auth } from "../../firebase";
+import { auth } from "../../../firebase";
 
 type RegisterInput = z.infer<typeof registerSchema>;
 
-export default function login() {
+export default function Login() {
   const loginForm = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -53,8 +53,6 @@ export default function login() {
   // };
 
   const handleLoginSubmit = async (data: RegisterInput) => {
-    console.log("호출안되냐?");
-
     const { username, email, phone, role, password, confirmPassword } = data;
     console.log(email);
 
@@ -68,8 +66,8 @@ export default function login() {
         // 이메일과 비밀번호를 사용하여 로그인 시도
         const userCredential = await signInWithEmailAndPassword(
           auth,
-          data.email,
-          data.password
+          email,
+          password
         );
 
         console.log("로그인 성공", userCredential.user);

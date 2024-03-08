@@ -27,6 +27,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { registerSchema } from "@/validators/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -36,6 +37,7 @@ type RegisterInput = z.infer<typeof registerSchema>;
 export default function Join() {
   const [step, setStep] = useState<number>(0);
   const { toast } = useToast();
+  const router = useRouter();
 
   const joinForm = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -75,12 +77,18 @@ export default function Join() {
       return;
     }
 
-    alert(JSON.stringify(data, null, 4));
+    toast({
+      description: "회원가입 완료",
+    });
+
+    setTimeout(() => {
+      router.push("/login");
+    }, 1000);
   };
 
   return (
     <div className="flex justify-center items-center h-screen">
-      <Card className="w-[350px]">
+      <Card className="w-[450px] h-[500px] flex justify-center flex-col">
         <CardHeader>
           <CardTitle>계정을 생성합니다.</CardTitle>
           <CardDescription>필수 정보를 입력해볼게요.</CardDescription>
@@ -155,7 +163,11 @@ export default function Join() {
               </Form>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button type="button" className="join" onClick={handleNextButton}>
+              <Button
+                type="button"
+                className="w-[130px]"
+                onClick={handleNextButton}
+              >
                 다음 단계로 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </CardFooter>
@@ -196,13 +208,17 @@ export default function Join() {
               </Form>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={() => setStep(0)}>
+              <Button
+                variant="outline"
+                onClick={() => setStep(0)}
+                className="w-[130px]"
+              >
                 <ArrowLeft className="mr-2" />
                 이전 단계로
               </Button>
               <Button
                 type="button"
-                className=""
+                className="w-[130px]"
                 onClick={joinForm.handleSubmit(handleJoinSubmit)}
               >
                 가입 완료

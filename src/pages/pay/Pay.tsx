@@ -7,6 +7,8 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -17,14 +19,25 @@ import {
 import { PaySchema } from "@/validators/pay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 type RegisterInput = z.infer<typeof PaySchema>;
 
+type ProductData = {
+  productName: string;
+  quantity: string;
+  price: string;
+};
+
 export default function Pay() {
-  const [finalPrice, setFinalPrice] = useState<number>(10000);
+  const [productData, setProductData] = useState<ProductData | null>(null); // 결제할 상품
+  const [initialPrice, setInitialPrice] = useState<number>(); // 최초 가격
+  const [finalPrice, setFinalPrice] = useState<number>(); // 최종 가격
+  const [applyCoupon, setApplyCoupon] = useState<boolean>(false); // 쿠폰 사용 여부
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<string>(""); // 선택된 결제 방법
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(PaySchema),
@@ -33,41 +46,99 @@ export default function Pay() {
     },
   });
 
-  function onSubmit(data: RegisterInput) {
-    const coupon = data.coupon;
-    console.log(data.coupon.length);
+  useEffect(() => {
+    async function fetchProductData() {
+      try {
+        const response = await fetch("/api/product");
+        if (!response.ok) {
+          throw new Error("데이터 가져오기 실패!");
+        }
 
-    let price = 10000; // 상품의 원래 가격
-
-    if (coupon.includes("%")) {
-      const couponPercentage = parseInt(coupon.replace("%", "")); // '%' 문자 제거 후 숫자로 변환
-      price = price * (1 - couponPercentage / 100); // 할인된 가격 계산
-    } else {
-      const couponValue = parseInt(coupon.replace(",", "")); // 선택된 쿠폰 값을 숫자로 변환
-      if (!isNaN(couponValue)) {
-        price -= couponValue; // 쿠폰 값을 상품 가격에서 차감
+        const data: ProductData = await response.json();
+        setProductData(data);
+      } catch (error) {
+        console.error("에러 : ", error);
       }
     }
 
+    fetchProductData();
+  }, []);
+
+  useEffect(() => {
+    if (productData) {
+      const price = parseInt(
+        productData.price.replace("원", "").replace(",", "")
+      );
+      setInitialPrice(price);
+      setFinalPrice(price);
+    }
+  }, [productData]);
+
+  function onSubmit(data: RegisterInput) {
+    const coupon = data.coupon;
+
+    let price = initialPrice; // 상품의 원래 가격
+
+    if (coupon && coupon.includes("%")) {
+      const couponPercentage = parseInt(coupon.replace("%", "")); // '%' 문자 제거 후 숫자로 변환
+      price = price! * (1 - couponPercentage / 100); // 할인된 가격 계산
+    } else {
+      const couponValue = parseInt(coupon!.replace(",", "")); // 선택된 쿠폰 값을 숫자로 변환
+      if (!isNaN(couponValue)) {
+        price! -= couponValue; // 쿠폰 값을 상품 가격에서 차감
+      }
+    }
+    // 쿠폰 적용된 상태
+    setApplyCoupon(true);
+
     // 최종 결제 금액 업데이트
     setFinalPrice(price);
+
+    // 포인트 입력값 초기화
+    form.setValue("point", "0");
   }
+
+  useEffect(() => {
+    if (applyCoupon) {
+      // 쿠폰이 적용시 포인트 초기화
+      form.setValue("point", "0");
+    }
+  }, [applyCoupon]);
 
   const onSubmitPoint = (data: z.infer<typeof PaySchema>) => {
     const point = data.point;
 
     let price = finalPrice;
 
-    if (+point <= 2000) {
-      price -= +point;
+    if (+point! <= 2000) {
+      price! -= +point!;
     }
 
     setFinalPrice(price);
   };
 
+  const handlePayment = () => {
+    if (selectedPaymentMethod === "bankTransfer") {
+      // 무통장 입금 선택 시 실행할 동작
+      console.log("무통장 입금을 선택했습니다.");
+      // 여기에 무통장 입금에 대한 처리를 추가하세요.
+    } else if (selectedPaymentMethod === "tossPay") {
+      // 토스페이 선택 시 실행할 동작
+      console.log("토스페이를 선택했습니다.");
+      // 여기에 토스페이에 대한 처리를 추가하세요.
+    } else {
+      // 선택된 결제 방법이 없을 때의 처리
+      console.log("결제 방법을 선택해주세요.");
+    }
+  };
+
+  // 선택된 결제 방법 변경
+  const handlePaymentMethodChange = (value: string) => {
+    setSelectedPaymentMethod(value);
+  };
+
   return (
     <div className="flex justify-center items-center h-screen flex-col space-y-5">
-      {/* <div className="flex justify-center items-center h-screen flex-col"> */}
       <div className="space-y-5">
         <Card className="w-[750px]">
           <CardHeader>
@@ -114,28 +185,17 @@ export default function Pay() {
                   height={50}
                   objectFit="cover"
                 />
-                <p>망고T</p>
+                <p>{productData?.productName}</p>
               </div>
               <div>
-                <p>1개</p>
+                <p>{productData?.quantity}</p>
               </div>
               <div>
-                <p>10,000원</p>
+                <p>{productData?.price}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        {/* <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle>쿠폰 & 포인트</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div>
-            <p className="font-bold">쿠폰</p>
-
-          </div>
-        </CardContent>
-      </Card> */}{" "}
         <Card className="w-[750px]">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -145,15 +205,12 @@ export default function Pay() {
                 render={({ field }) => (
                   <FormItem>
                     <CardHeader>
-                      <CardTitle>
-                        {/* <FormLabel>쿠폰</FormLabel> */}
-                        쿠폰
-                      </CardTitle>
+                      <CardTitle>쿠폰</CardTitle>
                     </CardHeader>
                     <div className="flex justify-center space-x-10 w-100">
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        defaultValue={field.value!}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -183,19 +240,16 @@ export default function Pay() {
                 name="point"
                 render={({ field }) => (
                   <FormItem>
-                    {/* <FormLabel>포인트</FormLabel> */}
                     <CardHeader>
-                      <CardTitle>
-                        {/* <FormLabel>쿠폰</FormLabel> */}
-                        포인트
-                      </CardTitle>
+                      <CardTitle>포인트</CardTitle>
                     </CardHeader>
                     <div className="flex justify-center space-x-6">
                       <div>
                         <input
                           className="w-[100px]"
                           type="number"
-                          {...field}
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
                           placeholder="포인트를 입력하세요."
                         />
                       </div>
@@ -210,21 +264,38 @@ export default function Pay() {
           </Form>
         </Card>
       </div>
-      {/* <div className="flex justify-center items-center h-screen flex-col"> */}
       <div>
         <Card className="w-[750px]">
           <CardHeader>
-            <CardTitle>
-              {/* <FormLabel>쿠폰</FormLabel> */}
-              최종 결제 금액
-            </CardTitle>
+            <CardTitle>최종 결제 금액</CardTitle>
           </CardHeader>
           <CardContent>
             <p>{finalPrice}</p>
           </CardContent>
         </Card>
       </div>
-      <Button type="submit">결제하기</Button>
+      <Card className="w-[750px]">
+        <CardHeader>
+          <CardTitle>결제 방법</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <RadioGroup
+            defaultValue="comfortable"
+            className="flex flex justify-center"
+            onValueChange={handlePaymentMethodChange}
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="bankTransfer" id="r1" />
+              <Label htmlFor="r1">무통장입금</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="tossPay" id="r2" />
+              <Label htmlFor="r2">토스페이</Label>
+            </div>
+          </RadioGroup>
+        </CardContent>
+      </Card>
+      <Button onClick={handlePayment}>결제하기</Button>
     </div>
   );
 }

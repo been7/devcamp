@@ -35,6 +35,7 @@ export default function Pay() {
   const [productData, setProductData] = useState<ProductData | null>(null); // 결제할 상품
   const [initialPrice, setInitialPrice] = useState<number>(); // 최초 가격
   const [finalPrice, setFinalPrice] = useState<number>(); // 최종 가격
+  const [afterCouponPrice, setAfterCouponPrice] = useState<number>();
   const [applyCoupon, setApplyCoupon] = useState<boolean>(false); // 쿠폰 사용 여부
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<string>(""); // 선택된 결제 방법
@@ -71,6 +72,7 @@ export default function Pay() {
       );
       setInitialPrice(price);
       setFinalPrice(price);
+      setAfterCouponPrice(price);
     }
   }, [productData]);
 
@@ -91,8 +93,11 @@ export default function Pay() {
     // 쿠폰 적용된 상태
     setApplyCoupon(true);
 
-    // 최종 결제 금액 업데이트
+    // 최종 결제 금액
     setFinalPrice(price);
+
+    // 포인트 적용에 사용할 최종 결제 금액
+    setAfterCouponPrice(price ?? 0);
 
     // 포인트 입력값 초기화
     form.setValue("point", "0");
@@ -108,27 +113,22 @@ export default function Pay() {
   const onSubmitPoint = (data: z.infer<typeof PaySchema>) => {
     const point = data.point;
 
-    let price = finalPrice;
+    let price = afterCouponPrice; // 쿠폰 적용 후 가격을 기준으로 포인트를 적용
 
     if (+point! <= 2000) {
       price! -= +point!;
     }
 
+    // 최종 결제 금액 업데이트
     setFinalPrice(price);
   };
 
   const handlePayment = () => {
     if (selectedPaymentMethod === "bankTransfer") {
-      // 무통장 입금 선택 시 실행할 동작
-      console.log("무통장 입금을 선택했습니다.");
-      // 여기에 무통장 입금에 대한 처리를 추가하세요.
+      // 무통장 입금 선택 시
     } else if (selectedPaymentMethod === "tossPay") {
-      // 토스페이 선택 시 실행할 동작
-      console.log("토스페이를 선택했습니다.");
-      // 여기에 토스페이에 대한 처리를 추가하세요.
+      // 토스페이 선택 시
     } else {
-      // 선택된 결제 방법이 없을 때의 처리
-      console.log("결제 방법을 선택해주세요.");
     }
   };
 

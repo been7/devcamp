@@ -7,8 +7,6 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -19,6 +17,7 @@ import {
 import { PaySchema } from "@/validators/pay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -274,28 +273,9 @@ export default function Pay() {
           </CardContent>
         </Card>
       </div>
-      <Card className="w-[750px]">
-        <CardHeader>
-          <CardTitle>결제 방법</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup
-            defaultValue="comfortable"
-            className="flex flex justify-center"
-            onValueChange={handlePaymentMethodChange}
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="bankTransfer" id="r1" />
-              <Label htmlFor="r1">무통장입금</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="tossPay" id="r2" />
-              <Label htmlFor="r2">토스페이</Label>
-            </div>
-          </RadioGroup>
-        </CardContent>
-      </Card>
-      <Button onClick={handlePayment}>결제하기</Button>
+      <Link href={"../checkout"}>
+        <Button onClick={handlePayment}>결제하기</Button>
+      </Link>
     </div>
   );
 }

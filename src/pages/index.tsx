@@ -28,13 +28,12 @@ import { registerSchema } from "@/validators/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FirebaseError } from "firebase/app";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { addDoc, collection } from "firebase/firestore";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { auth, db } from "../../firebase";
+import { auth } from "../../firebase";
 
 type RegisterInput = z.infer<typeof registerSchema>;
 
@@ -83,16 +82,16 @@ export default function Join() {
     }
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      const newUser = {
-        username,
-        email,
-        phone,
-        role,
-        password,
-        confirmPassword,
-      };
+      // const newUser = {
+      //   username,
+      //   email,
+      //   phone,
+      //   role,
+      //   password,
+      //   confirmPassword,
+      // };
 
-      await addDoc(collection(db, "users"), newUser);
+      // await addDoc(collection(db, "users"), newUser);
     } catch (err) {
       // FirebaseError 형식으로 오류를 명시적으로 처리
       if (err instanceof FirebaseError) {
